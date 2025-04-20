@@ -25,6 +25,9 @@ const bulkImportForm = useForm({
     json_data: ''
 });
 
+// ++ Form for toggling human validation ++
+const toggleValidationForm = useForm({});
+
 // --- State for Modals ---
 const showCreatePreferenceModal = ref(false);
 const showEditPreferenceModal = ref(false);
@@ -126,6 +129,28 @@ const submitBulkImportForm = () => {
   });
 };
 
+// ++ Toggle Human Validation Action ++
+const toggleHumanValidation = (preference) => {
+    // We use a distinct form instance to track processing state for this specific action
+    // If you were updating multiple things at once, you might reuse a form
+    const form = useForm({}); 
+
+    // Note: We pass the preference ID in the route, not in the form data
+    form.patch(route('admin.preferences.toggleValidation', { preference: preference.id }), {
+        preserveScroll: true,
+        preserveState: true, // Important to keep UI state consistent, especially if not relying on full page reload logic
+        onSuccess: () => {
+            // Success message handled by backend redirect in this case
+            // Alternatively, show a frontend toast/notification here
+        },
+        onError: (errors) => {
+            console.error("Error updating validation status:", errors);
+            alert('Error al actualizar el estado de validación.');
+            // No need to manually revert state if preserveState: true and backend sends updated props
+        }
+    });
+};
+
 </script>
 
 <template>
@@ -208,21 +233,37 @@ const submitBulkImportForm = () => {
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferencia 1</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votos</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferencia 2</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votos</th>
+                <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Validado</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="preference in preferences" :key="preference.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.id }}</td>
+              <tr 
+                v-for="(preference, index) in preferences" 
+                :key="preference.id"
+                :class="{
+                  'bg-green-100 hover:bg-green-200': preference.human_validated, // Verde si está validado
+                  'hover:bg-gray-50': !preference.human_validated // Hover gris si no está validado
+                }"
+              >
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preferences.length - index }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-900">{{ preference.preference1 }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference1_votes ?? 0 }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-900">{{ preference.preference2 }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference2_votes ?? 0 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <input
+                    type="checkbox"
+                    :checked="preference.human_validated"
+                    @change="toggleHumanValidation(preference)"
+                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-5 w-5 cursor-pointer"
+                  />
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
                     @click="openEditPreferenceModal(preference)" 
@@ -239,7 +280,7 @@ const submitBulkImportForm = () => {
                 </td>
               </tr>
               <tr v-if="!preferences || preferences.length === 0">
-                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No hay preferencias en esta categoría.</td>
+                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No hay preferencias en esta categoría.</td>
               </tr>
             </tbody>
           </table>

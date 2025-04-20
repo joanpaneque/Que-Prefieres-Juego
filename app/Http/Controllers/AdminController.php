@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Redirect;
 
 class AdminController extends Controller
 {
@@ -62,7 +63,7 @@ class AdminController extends Controller
         // Cargar las preferencias ordenadas. Los accessors se encargarán de los conteos.
         $preferences = $category->preferences()
                                 // ->withCount('preference1Votes', 'preference2Votes') // Eliminado: Usaremos los accessors existentes
-                                ->orderBy('created_at', 'desc')
+                                ->orderBy('updated_at', 'desc')
                                 ->get();
 
         return Inertia::render('Admin/CategoryShow', [
@@ -166,5 +167,23 @@ class AdminController extends Controller
 
         return redirect()->route('admin.categories.show', $category)
                      ->with('success', count($preferencesData) . ' preferencias importadas masivamente con éxito.');
+    }
+
+    /**
+     * Toggle the human_validated status of a preference.
+     *
+     * @param  \App\Models\Preference  $preference
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function toggleValidation(Preference $preference)
+    {
+        // Opcional: añadir autorización para asegurar que el usuario puede modificar esta preferencia
+        // Gate::authorize('update', $preference);
+
+        $preference->human_validated = !$preference->human_validated;
+        $preference->save();
+
+        // Inertia recibirá la actualización de props automáticamente al redirigir.
+        return Redirect::back()->with('success', 'Estado de validación actualizado.');
     }
 }

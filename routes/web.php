@@ -26,6 +26,11 @@ Route::post('/admin/categories/{category}/preferences', [AdminController::class,
 Route::put('/admin/preferences/{preference}', [AdminController::class, 'updatePreference'])->middleware('auth')->name('admin.preferences.update');
 Route::delete('/admin/preferences/{preference}', [AdminController::class, 'deletePreference'])->middleware('auth')->name('admin.preferences.delete');
 
+// ++ Nueva ruta para la validación humana de preferencias ++
+Route::patch('/admin/preferences/{preference}/toggle-validation', [AdminController::class, 'toggleValidation'])
+    ->middleware('auth')
+    ->name('admin.preferences.toggleValidation');
+
 // ++ Nueva ruta para importación masiva de preferencias ++
 Route::post('/admin/categories/{category}/preferences/bulk', [AdminController::class, 'bulkStorePreferences'])
     ->middleware('auth') // Asegúrate de que 'auth' sea suficiente, o añade 'admin' si tienes ese middleware

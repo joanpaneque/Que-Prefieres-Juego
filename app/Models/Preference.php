@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Preference extends Model
 {
-    protected $fillable = ['preference1', 'preference2'];
+    protected $fillable = ['preference1', 'preference2', 'human_validated'];
 
     /**
      * The accessors to append to the model's array form.
@@ -34,5 +34,4 @@ class Preference extends Model
     {
         return $this->votes()->where('vote', 'preference2')->count();
     }
-    
 }
