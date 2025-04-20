@@ -20,6 +20,11 @@ class Preference extends Model
         return $this->hasMany(Vote::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function getPreference1VotesAttribute()
     {
         return $this->votes()->where('vote', 'preference1')->count();
