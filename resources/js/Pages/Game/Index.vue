@@ -1,4 +1,5 @@
 <script setup>
+import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';  
 
@@ -138,10 +139,35 @@ onMounted(() => {
 </script>
 
 <template>
+    <Head>
+        <title>Juego ¿Qué Prefieres? Online Gratis</title>
+        <meta name="description" content="Juega gratis al popular juego '¿Qué prefieres?' online. Enfrenta divertidos y difíciles dilemas, vota por tu opción preferida y descubre al instante qué elige la mayoría. ¡Horas de diversión garantizadas!">
+        <meta name="keywords" content="qué prefieres, que prefieres, juego, jugar, online, gratis, preguntas, dilemas, elecciones, votar, comparar, popular, divertido">
+        
+        <!-- Open Graph / Facebook -->
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://queprefieresjuego.com/">
+        <meta property="og:title" content="Juego ¿Qué Prefieres? Online Gratis">
+        <meta property="og:description" content="Juega gratis al popular juego '¿Qué prefieres?' online. Enfrenta divertidos y difíciles dilemas, vota por tu opción preferida y descubre al instante qué elige la mayoría.">
+        <!-- <meta property="og:image" content="https://queprefieresjuego.com/path/to/your/image.jpg"> --> <!-- ¡Descomenta y pon una imagen atractiva! -->
+
+        <!-- Twitter -->
+        <meta property="twitter:card" content="summary_large_image">
+        <meta property="twitter:url" content="https://queprefieresjuego.com/">
+        <meta property="twitter:title" content="Juego ¿Qué Prefieres? Online Gratis">
+        <meta property="twitter:description" content="Juega gratis al popular juego '¿Qué prefieres?' online. Enfrenta divertidos y difíciles dilemas, vota por tu opción preferida y descubre al instante qué elige la mayoría.">
+        <!-- <meta property="twitter:image" content="https://queprefieresjuego.com/path/to/your/image.jpg"> --> <!-- ¡Descomenta y pon una imagen atractiva! -->
+
+        <!-- Canonical URL -->
+        <link rel="canonical" href="https://queprefieresjuego.com/" />
+    </Head>
     <div class="h-dvh w-screen overflow-hidden bg-zinc-200 grid grid-rows-2 p-4 gap-4 relative">
+        <div class="absolute top-0 left-[50%] -translate-x-1/2 text-center bg-zinc-200 p-4 rounded-b-2xl">
+            <h1 class="text-4xl font-bold">¿Qué Prefieres?</h1>
+        </div>
         <div
             :class="[
-                'bg-pink-500 rounded-2xl flex text-center items-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
+                'bg-gradient-to-br from-pink-700 to-red-500 rounded-2xl flex text-center items-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
                 canVote ? 'cursor-pointer hover:bg-red-600' : 'cursor-not-allowed'
             ]"
             @click="canVote && vote('preference1')"
@@ -154,8 +180,8 @@ onMounted(() => {
         </div>
         <div
             :class="[
-                'bg-sky-600 rounded-2xl flex items-center text-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
-                canVote ? 'cursor-pointer hover:bg-sky-700' : 'cursor-not-allowed'
+                'bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center text-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
+                canVote ? 'cursor-pointer hover:bg-red-600' : 'cursor-not-allowed'
             ]"
             @click="canVote && vote('preference2')"
         >
@@ -171,7 +197,7 @@ onMounted(() => {
             <div 
                 v-show="showNextButtonDelayed" 
                 @click="getNewPreference"
-                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-zinc-800 px-8 py-4 rounded-lg shadow-lg cursor-pointer text-2xl font-semibold hover:bg-zinc-100 z-10"
+                class="text-center absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-zinc-800 px-8 py-4 rounded-lg shadow-lg cursor-pointer text-2xl font-semibold hover:bg-zinc-100 z-10"
             >
                 Siguiente pregunta
             </div>
