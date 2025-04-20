@@ -141,7 +141,7 @@ onMounted(() => {
     <div class="h-dvh w-screen overflow-hidden bg-zinc-200 grid grid-rows-2 p-4 gap-4 relative">
         <div
             :class="[
-                'bg-red-500 rounded-2xl flex text-center items-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
+                'bg-pink-500 rounded-2xl flex text-center items-center p-4 gap-4 justify-center text-white text-4xl flex-col transition-colors duration-200',
                 canVote ? 'cursor-pointer hover:bg-red-600' : 'cursor-not-allowed'
             ]"
             @click="canVote && vote('preference1')"
