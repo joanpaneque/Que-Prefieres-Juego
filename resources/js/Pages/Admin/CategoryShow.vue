@@ -8,12 +8,6 @@ const props = defineProps({
   errors: Object // Recibir errores de validación
 });
 
-// --- State for Modals ---
-const showCreatePreferenceModal = ref(false);
-const showEditPreferenceModal = ref(false);
-const showDeletePreferenceModal = ref(false);
-const selectedPreference = ref(null);
-
 // --- Forms ---
 const createPreferenceForm = useForm({
   preference1: '',
@@ -25,6 +19,19 @@ const editPreferenceForm = useForm({
   preference1: '',
   preference2: ''
 });
+
+// ++ Form for Bulk Import ++
+const bulkImportForm = useForm({
+    json_data: ''
+});
+
+// --- State for Modals ---
+const showCreatePreferenceModal = ref(false);
+const showEditPreferenceModal = ref(false);
+const showDeletePreferenceModal = ref(false);
+const selectedPreference = ref(null);
+// ++ State for Bulk Import Modal ++
+const showBulkImportModal = ref(false);
 
 // --- Modal Actions ---
 const openCreatePreferenceModal = () => {
@@ -90,6 +97,35 @@ const confirmDeletePreference = () => {
   });
 };
 
+// ++ Bulk Import Modal Actions ++
+const openBulkImportModal = () => {
+  bulkImportForm.reset(); // Reset form and errors
+  showBulkImportModal.value = true;
+};
+
+const submitBulkImportForm = () => {
+  // Basic client-side JSON validation (optional but recommended)
+  try {
+    JSON.parse(bulkImportForm.json_data);
+  } catch (e) {
+    bulkImportForm.setError('json_data', 'El formato del JSON no es válido.');
+    return; // Stop submission if JSON is invalid client-side
+  }
+
+  bulkImportForm.post(route('admin.preferences.bulkStore', { category: props.category.id }), {
+    preserveScroll: true,
+    onSuccess: () => {
+      showBulkImportModal.value = false;
+      bulkImportForm.reset();
+      // Optionally add a success notification/toast here
+    },
+    onError: (errors) => {
+      // Backend errors will automatically populate bulkImportForm.errors
+      console.error("Error importing preferences:", errors);
+    }
+  });
+};
+
 </script>
 
 <template>
@@ -149,14 +185,22 @@ const confirmDeletePreference = () => {
 
       <!-- Sección de Preferencias -->
       <div class="bg-white shadow rounded-lg p-6">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex justify-between items-center mb-6 gap-4 flex-wrap"> <!-- Added gap and wrap -->
           <h2 class="text-xl font-semibold text-gray-800">Preferencias de "{{ category.name }}"</h2>
-          <button 
-            @click="openCreatePreferenceModal"
-            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-          >
-            Crear Preferencia
-          </button>
+          <div class="flex gap-2 flex-wrap"> <!-- Wrapper for buttons -->
+            <button
+              @click="openBulkImportModal"
+              class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+            >
+              Importar Masivamente
+            </button>
+            <button
+              @click="openCreatePreferenceModal"
+              class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            >
+              Crear Preferencia
+            </button>
+          </div>
         </div>
         
         <!-- Tabla de Preferencias -->
@@ -176,9 +220,9 @@ const confirmDeletePreference = () => {
               <tr v-for="preference in preferences" :key="preference.id">
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.id }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-900">{{ preference.preference1 }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference1_votes_count ?? 0 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference1_votes ?? 0 }}</td>
                 <td class="px-6 py-4 whitespace-normal text-sm text-gray-900">{{ preference.preference2 }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference2_votes_count ?? 0 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ preference.preference2_votes ?? 0 }}</td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
                     @click="openEditPreferenceModal(preference)" 
@@ -321,6 +365,49 @@ const confirmDeletePreference = () => {
             Eliminar Preferencia
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- ++ Modal Importar Masivamente ++ -->
+    <div v-if="showBulkImportModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full flex items-center justify-center z-50 px-4">
+      <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Importar Preferencias Masivamente para "{{ category.name }}"</h3>
+        <p class="text-sm text-gray-600 mb-2">
+          Pega aquí un array JSON de objetos. Cada objeto debe tener las claves "preference1" y "preference2".
+        </p>
+        <p class="text-xs text-gray-500 mb-4">
+          Ejemplo: <code class="bg-gray-100 p-1 rounded">[{"preference1": "Opción A", "preference2": "Opción B"}, {"preference1": "...", "preference2": "..."}]</code>
+        </p>
+        <form @submit.prevent="submitBulkImportForm">
+          <div class="mb-4">
+            <label for="bulk-json" class="block text-sm font-medium text-gray-700 mb-1">Datos JSON</label>
+            <textarea
+              v-model="bulkImportForm.json_data"
+              id="bulk-json"
+              rows="10"
+              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 font-mono text-sm"
+              placeholder='[&#10;  {&#10;    "preference1": "...",&#10;    "preference2": "..."&#10;  },&#10;  {&#10;    "preference1": "...",&#10;    "preference2": "..."&#10;  }&#10;]'
+              required
+            ></textarea>
+            <div v-if="bulkImportForm.errors.json_data" class="text-red-500 text-sm mt-1">{{ bulkImportForm.errors.json_data }}</div>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button
+              type="button"
+              @click="showBulkImportModal = false"
+              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+              :disabled="bulkImportForm.processing"
+            >
+              Importar Preferencias
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 

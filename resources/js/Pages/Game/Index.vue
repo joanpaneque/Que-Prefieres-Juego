@@ -173,7 +173,7 @@ function selectCategory(category) {
         return;
     }
     selectedCategory.value = category;
-    showCategoriesMenu.value = false;
+    showCategoriesMenu.value = false; // Asegurarse de que el menú se cierre
     // Limpiar lista de preferencias jugadas al cambiar de categoría
     alreadyPlayedPreferences.value = []; 
     // Asegurarse de limpiar el mensaje de "no quedan preguntas"
@@ -225,8 +225,7 @@ function resetPreferences() {
             @click="!showCategoriesMenu && (showCategoriesMenu = true)"
         >
             <h1 
-                class="text-2xl font-bold inline-flex items-center gap-2 justify-center cursor-pointer mb-4" 
-                @click.stop="showCategoriesMenu = !showCategoriesMenu"
+                class="text-xl font-bold inline-flex items-center gap-2 justify-center cursor-pointer mb-4" 
             >
                 {{ selectedCategory ? selectedCategory.name : 'Preguntas generales' }}
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" 
