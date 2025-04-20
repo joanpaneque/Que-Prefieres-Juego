@@ -172,9 +172,9 @@ onMounted(() => {
             ]"
             @click="canVote && vote('preference1')"
         >
-            <h1>{{ currentPreference?.preference1 }}</h1>
+            <div>{{ currentPreference?.preference1 }}</div>
             <div v-show="showVotes">
-                <h1 class="text-6xl font-bold">{{ animatedPreference1Percentage }}%</h1>
+                <div class="text-6xl font-bold">{{ animatedPreference1Percentage }}%</div>
                 <span class="text-lg">({{ currentPreference?.preference1_votes }} votos)</span>
             </div>
         </div>
@@ -185,9 +185,9 @@ onMounted(() => {
             ]"
             @click="canVote && vote('preference2')"
         >
-            <h1>{{ currentPreference?.preference2 }}</h1>
+            <div>{{ currentPreference?.preference2 }}</div>
             <div v-show="showVotes">
-                <h1 class="text-6xl font-bold">{{ animatedPreference2Percentage }}%</h1>
+                <div class="text-6xl font-bold">{{ animatedPreference2Percentage }}%</div>
                  <span class="text-lg">({{ currentPreference?.preference2_votes }} votos)</span>
             </div>
         </div>
