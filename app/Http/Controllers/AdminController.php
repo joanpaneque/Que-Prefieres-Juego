@@ -19,7 +19,8 @@ class AdminController extends Controller
 {
     public function index()
     {
-        $categories = Category::orderBy('name')->get();
+        // Order categories by position and load preference count
+        $categories = Category::withCount('preferences')->orderBy('position', 'asc')->get();
         return Inertia::render('Admin/Index', [
             'categories' => $categories
         ]);
@@ -88,12 +89,13 @@ class AdminController extends Controller
 
     public function updatePreference(Request $request, Preference $preference)
     {
-        $request->validate([
+        $validatedData = $request->validate([
             'preference1' => 'required|string|max:255',
             'preference2' => 'required|string|max:255|different:preference1',
+            'human_validated' => 'required|boolean',
         ]);
 
-        $preference->update($request->only('preference1', 'preference2'));
+        $preference->update($validatedData);
 
         return redirect()->route('admin.categories.show', $preference->category_id)->with('success', 'Preferencia actualizada correctamente.');
     }
@@ -192,5 +194,26 @@ class AdminController extends Controller
 
         // Inertia recibirá la actualización de props automáticamente al redirigir.
         return Redirect::back()->with('success', 'Estado de validación actualizado.');
+    }
+
+    public function updateCategoryOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'categories' => 'required|array',
+            'categories.*.id' => 'required|integer|exists:categories,id',
+            'categories.*.position' => 'required|integer|min:0',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            foreach ($validated['categories'] as $categoryData) {
+                Category::where('id', $categoryData['id'])->update(['position' => $categoryData['position']]);
+            }
+        });
+
+        // Redirect back or return a success response
+        // Using back() with Inertia might require specific handling if you want flash messages
+        return Redirect::back()->with('success', 'Category order updated successfully.');
+        // Alternatively, for API-like responses if not using Inertia redirects for this:
+        // return response()->json(['message' => 'Category order updated successfully.']);
     }
 }

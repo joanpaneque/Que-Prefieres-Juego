@@ -14,7 +14,7 @@ class GameController extends Controller
 {
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::orderBy('position', 'asc')->get();
         return Inertia::render('Game/Index', [
             'categories' => $categories
         ]);
@@ -25,27 +25,36 @@ class GameController extends Controller
         $preferencesToSkip = $request->input('preferencesToSkip', []);
         $categoryId = $request->input('categoryId');
 
-        $query = Preference::query();
+        // Start query for validated preferences
+        $query = Preference::where('human_validated', true);
 
         if ($categoryId) {
             $query->where('category_id', $categoryId);
         }
 
+        // Attempt to find a validated preference not in the skip list
         $preference = $query->whereNotIn('id', $preferencesToSkip)
                              ->inRandomOrder()
                              ->first();
 
         if (!$preference) {
-            $remainingQuery = Preference::query();
+            // Check if *any* validated preferences exist for the category (ignoring skip list)
+            $remainingValidatedQuery = Preference::where('human_validated', true);
             if ($categoryId) {
-                 $remainingQuery->where('category_id', $categoryId);
+                 $remainingValidatedQuery->where('category_id', $categoryId);
             }
-            $remainingCount = $remainingQuery->whereNotIn('id', $preferencesToSkip)->count();
+            // Count only validated ones not in skip list
+            $remainingValidatedCount = (clone $remainingValidatedQuery) // Clone to avoid modifying the original query object
+                                           ->whereNotIn('id', $preferencesToSkip)
+                                           ->count();
 
-            if ($remainingCount === 0) {
-                 return response()->json(['preference' => null, 'message' => 'No more preferences found']);
+            if ($remainingValidatedCount === 0) {
+                 // User has seen all available validated preferences in this category/overall
+                 return response()->json(['preference' => null, 'message' => 'No more validated preferences found']);
             } else {
-                return response()->json(['preference' => null, 'message' => 'Could not fetch preference']);
+                // Should ideally not happen if the query logic is correct, but as a fallback
+                // Might indicate an issue fetching a specific preference that exists
+                 return response()->json(['preference' => null, 'message' => 'Could not fetch a validated preference']);
             }
         }
 

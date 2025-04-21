@@ -22,6 +22,9 @@ Route::put('/admin/categories/{category}', [AdminController::class, 'updateCateg
 Route::delete('/admin/categories/{category}', [AdminController::class, 'deleteCategory'])->middleware('auth')->name('admin.categories.delete');
 Route::get('/admin/categories/{category}', [AdminController::class, 'showCategory'])->middleware('auth')->name('admin.categories.show');
 
+// Route for updating category order
+Route::post('/admin/categories/update-order', [AdminController::class, 'updateCategoryOrder'])->middleware('auth')->name('admin.categories.updateOrder');
+
 // Rutas para la gestión de preferencias dentro de una categoría
 Route::post('/admin/categories/{category}/preferences', [AdminController::class, 'storePreference'])->middleware('auth')->name('admin.preferences.store');
 Route::put('/admin/preferences/{preference}', [AdminController::class, 'updatePreference'])->middleware('auth')->name('admin.preferences.update');

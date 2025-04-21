@@ -1,11 +1,20 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref, onMounted, watch } from 'vue';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
+import draggable from 'vuedraggable';
 
 // Recibir las categorías del controlador
 const props = defineProps({
   categories: Array
 });
+
+// Reactive reference for categories, initialized with props
+const localCategories = ref([...props.categories]); // Use spread to create a new array
+
+// Watch for changes in props.categories and update localCategories
+watch(() => props.categories, (newVal) => {
+  localCategories.value = [...newVal]; // Update with a new array copy
+}, { deep: true }); // Use deep watch just in case, although direct array replacement should trigger it
 
 // Formulario para crear categorías
 const createForm = useForm({
@@ -69,6 +78,22 @@ const confirmDelete = () => {
     });
   }
 };
+
+// Method to update category order
+const updateCategoryOrder = () => {
+  const orderedIds = localCategories.value.map((category, index) => ({
+    id: category.id,
+    position: index
+  }));
+
+  router.post(route('admin.categories.updateOrder'), {
+    categories: orderedIds
+  }, {
+    preserveState: true, // Keep component state
+    preserveScroll: true // Keep scroll position
+    // Optional: Add onSuccess/onError handlers if needed
+  });
+};
 </script>
 
 <template>
@@ -112,36 +137,52 @@ const confirmDelete = () => {
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Preferencias</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr v-for="category in categories" :key="category.id">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <Link 
-                      :href="route('admin.categories.show', { category: category.id })" 
-                      class="text-indigo-600 hover:text-indigo-900 hover:underline"
-                    >
-                      {{ category.name }}
-                    </Link>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      @click="openEditModal(category)" 
-                      class="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      Editar
-                    </button>
-                    <button 
-                      @click="openDeleteModal(category)" 
-                      class="text-red-600 hover:text-red-900"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="!categories || categories.length === 0">
-                  <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
+              <draggable 
+                :list="localCategories" 
+                item-key="id" 
+                tag="tbody" 
+                class="bg-white divide-y divide-gray-200"
+                @end="updateCategoryOrder"
+                handle=".drag-handle"
+              >
+                <template #item="{element: category}">
+                  <tr :key="category.id">
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <span class="drag-handle cursor-move mr-2">☰</span>
+                      <Link 
+                        :href="route('admin.categories.show', { category: category.id })" 
+                        class="text-indigo-600 hover:text-indigo-900 hover:underline"
+                      >
+                        {{ category.name }}
+                      </Link>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ category.preferences_count }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button 
+                        @click="openEditModal(category)" 
+                        class="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        @click="openDeleteModal(category)" 
+                        class="text-red-600 hover:text-red-900"
+                      >
+                        Eliminar
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </draggable>
+              <tbody v-if="!localCategories || localCategories.length === 0" class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
                 </tr>
               </tbody>
             </table>
@@ -249,5 +290,12 @@ const confirmDelete = () => {
 </template>
 
 <style scoped>
-/* Add component-specific styles here */
+.drag-handle {
+  cursor: move;
+}
+
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
 </style> 
