@@ -222,7 +222,7 @@ function resetPreferences() {
                 'h-[calc(100%-48px-16px)] max-w-full overflow-y-auto': showCategoriesMenu, // Añadido overflow
                 'h-12 max-w-fit cursor-pointer': !showCategoriesMenu // Añadido cursor
             }"
-            @click="!showCategoriesMenu && (showCategoriesMenu = true)"
+            @click="showCategoriesMenu = !showCategoriesMenu"
         >
             <h1 
                 class="text-xl font-bold inline-flex items-center gap-2 justify-center cursor-pointer mb-4" 
@@ -240,8 +240,8 @@ function resetPreferences() {
                 <div 
                     v-for="category in categories" 
                     :key="category.id" 
-                    @click="selectCategory(category)" 
-                    class="text-xl p-2 rounded hover:bg-gray-700 cursor-pointer"
+                    @click.stop="selectCategory(category)"
+                    class="text-xl p-2 rounded hover:bg-gray-700 cursor-pointer w-[300px] mx-auto"
                     :class="{'bg-gray-600 font-semibold': selectedCategory && selectedCategory.id === category.id}"
                 >
                     {{ category.name }}
@@ -250,8 +250,11 @@ function resetPreferences() {
                     No hay categorías disponibles.
                  </div>
                  <!-- Botón para cerrar -->
-                 <button @click.stop="showCategoriesMenu = false" class="mt-4 text-sm text-gray-400 hover:text-white">
-                    Cerrar
+                 <button 
+                    @click.stop="showCategoriesMenu = false" 
+                    class="mt-6 px-4 py-2 bg-sky-700 w-[300px] text-lg text-white rounded hover:bg-gray-600 transition w-full"
+                 >
+                     Cerrar
                  </button>
             </div>
         </div>

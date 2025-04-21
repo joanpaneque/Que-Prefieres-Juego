@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redirect;
 
+use App\Services\OpenAIService;
+
 class AdminController extends Controller
 {
     public function index()
@@ -149,6 +151,11 @@ class AdminController extends Controller
             ]);
         }
 
+
+
+        // The original try-catch block for saving preferences is kept below,
+        // but you might want to integrate the duplication check result
+        // (e.g., only save if $potentialDuplicates is empty, or ask user for confirmation)
         try {
             DB::transaction(function () use ($preferencesData, $category) {
                 foreach ($preferencesData as $prefData) {

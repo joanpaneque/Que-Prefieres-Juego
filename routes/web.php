@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\TestController;
 
 Route::get('/', [GameController::class, 'index']);
 Route::get('/api/get-new-preference', [GameController::class, 'jsonGetNewPreference']);
@@ -46,3 +47,5 @@ Route::post('login', [AuthenticatedSessionController::class, 'store'])
 Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
                 ->middleware('auth')
                 ->name('logout');
+
+Route::get('/test', [TestController::class, 'index']);

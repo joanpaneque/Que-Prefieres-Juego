@@ -17,7 +17,8 @@ const createPreferenceForm = useForm({
 const editPreferenceForm = useForm({
   id: null,
   preference1: '',
-  preference2: ''
+  preference2: '',
+  human_validated: false // Añadir campo para validación humana
 });
 
 // ++ Form for Bulk Import ++
@@ -60,6 +61,7 @@ const openEditPreferenceModal = (preference) => {
   editPreferenceForm.id = preference.id;
   editPreferenceForm.preference1 = preference.preference1;
   editPreferenceForm.preference2 = preference.preference2;
+  editPreferenceForm.human_validated = !!preference.human_validated; // Inicializar con el valor actual (convertir a booleano)
   showEditPreferenceModal.value = true;
 };
 
@@ -344,10 +346,10 @@ const toggleHumanValidation = (preference) => {
         <form @submit.prevent="submitEditPreferenceForm">
           <div class="mb-4">
             <label for="edit-pref1" class="block text-sm font-medium text-gray-700">Opción 1</label>
-            <input 
-              v-model="editPreferenceForm.preference1" 
-              type="text" 
-              id="edit-pref1" 
+            <input
+              v-model="editPreferenceForm.preference1"
+              type="text"
+              id="edit-pref1"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               required
             >
@@ -355,24 +357,39 @@ const toggleHumanValidation = (preference) => {
           </div>
           <div class="mb-4">
             <label for="edit-pref2" class="block text-sm font-medium text-gray-700">Opción 2</label>
-            <input 
-              v-model="editPreferenceForm.preference2" 
-              type="text" 
-              id="edit-pref2" 
+            <input
+              v-model="editPreferenceForm.preference2"
+              type="text"
+              id="edit-pref2"
               class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
               required
             >
              <div v-if="editPreferenceForm.errors.preference2" class="text-red-500 text-sm mt-1">{{ editPreferenceForm.errors.preference2 }}</div>
           </div>
+          <!-- ++ Checkbox para Human Validated ++ -->
+          <div class="mb-4">
+              <label for="edit-human-validated" class="flex items-center">
+                  <input
+                      type="checkbox"
+                      id="edit-human-validated"
+                      v-model="editPreferenceForm.human_validated"
+                      class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-4 w-4 mr-2"
+                  />
+                  <span class="text-sm font-medium text-gray-700">Validado manualmente</span>
+              </label>
+              <!-- No solemos mostrar errores específicos para un checkbox, pero se podría añadir si es necesario -->
+              <!-- <div v-if="editPreferenceForm.errors.human_validated" class="text-red-500 text-sm mt-1">{{ editPreferenceForm.errors.human_validated }}</div> -->
+          </div>
+          <!-- ++ Fin Checkbox ++ -->
           <div class="flex justify-end gap-3 mt-6">
-            <button 
-              type="button" 
+            <button
+              type="button"
               @click="showEditPreferenceModal = false; selectedPreference = null;"
               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
               Cancelar
             </button>
-            <button 
+            <button
               type="submit"
               class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               :disabled="editPreferenceForm.processing"
