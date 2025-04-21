@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import draggable from 'vuedraggable';
 
@@ -15,6 +15,15 @@ const localCategories = ref([...props.categories]); // Use spread to create a ne
 watch(() => props.categories, (newVal) => {
   localCategories.value = [...newVal]; // Update with a new array copy
 }, { deep: true }); // Use deep watch just in case, although direct array replacement should trigger it
+
+// Calcula los totales para la fila de pie de tabla
+const totalPreferences = computed(() => {
+  return localCategories.value.reduce((sum, cat) => sum + cat.preferences_count, 0);
+});
+
+const totalVotes = computed(() => {
+  return localCategories.value.reduce((sum, cat) => sum + cat.total_votes, 0);
+});
 
 // Datos para el gráfico
 const chartData = computed(() => {
@@ -150,6 +159,49 @@ const updateCategoryOrder = () => {
 let chartInstance = null;
 const chartContainer = ref(null);
 
+// Estado para las últimas respuestas
+const recentResponses = ref([]);
+let intervalId = null;
+
+// Función para formatear el tiempo transcurrido
+const formatTimeAgo = (isoTimestamp) => {
+  if (!isoTimestamp) return '';
+  const now = new Date();
+  const past = new Date(isoTimestamp);
+  const diffInSeconds = Math.round((now - past) / 1000);
+
+  if (diffInSeconds < 60) {
+    return `hace ${diffInSeconds} segundo${diffInSeconds !== 1 ? 's' : ''}`;
+  } else if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `hace ${minutes} minuto${minutes !== 1 ? 's' : ''}`;
+  } else if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `hace ${hours} hora${hours !== 1 ? 's' : ''}`;
+  } else {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `hace ${days} día${days !== 1 ? 's' : ''}`;
+  }
+};
+
+// Función para obtener las últimas respuestas
+const fetchRecentResponses = async () => {
+  try {
+    // Asume que tienes una ruta API '/api/admin/recent-responses'
+    // Deberás ajustar la URL si es diferente o si usas las rutas nombradas de Ziggy/Laravel
+    const response = await fetch('/api/admin/recent-responses'); 
+    if (!response.ok) {
+      throw new Error(`Error fetching recent responses: ${response.statusText}`);
+    }
+    const data = await response.json();
+    // CORRECCIÓN: Guardar los datos directamente sin pre-formatear el timestamp
+    recentResponses.value = data; 
+  } catch (error) {
+    console.error("Failed to load recent responses:", error);
+    // Opcional: mostrar un mensaje de error al usuario
+  }
+};
+
 onMounted(() => {
   // Importar Chart.js dinámicamente para evitar problemas de SSR
   import('chart.js').then(module => {
@@ -164,6 +216,17 @@ onMounted(() => {
         data: chartData.value,
         options: chartOptions
       });
+    }
+
+    // Carga inicial de respuestas y inicio del intervalo
+    fetchRecentResponses();
+    intervalId = setInterval(fetchRecentResponses, 1000); // Actualiza cada 1 segundo
+  });
+
+  onUnmounted(() => {
+    // Limpiar el intervalo cuando el componente se desmonte
+    if (intervalId) {
+      clearInterval(intervalId);
     }
   });
 });
@@ -277,6 +340,18 @@ watch(chartData, (newData) => {
                   <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
                 </tr>
               </tbody>
+              <tfoot class="bg-gray-100 font-semibold">
+                <tr>
+                  <td class="px-6 py-4 text-sm text-gray-700 text-right">Total:</td>
+                  <td class="px-6 py-4 text-sm text-gray-700">
+                    {{ totalPreferences }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-700">
+                    {{ totalVotes }}
+                  </td>
+                  <td colspan="2" class="px-6 py-4 text-sm text-gray-700"></td> <!-- Empty cells for color and actions -->
+                </tr>
+              </tfoot>
             </table>
           </div>
           
@@ -293,6 +368,41 @@ watch(chartData, (newData) => {
             </div>
           </div>
         </div>
+
+        <!-- Sección de últimas respuestas -->
+        <div class="bg-white shadow rounded-lg p-6 mt-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Últimas 10 Respuestas</h2>
+          <div v-if="recentResponses.length > 0" class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferencia / Selección</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hace</th> 
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="response in recentResponses" :key="response.id">
+                  <td class="px-6 py-4 whitespace-normal text-sm text-gray-900">
+                    <span :class="{ 'text-green-600 font-semibold': response.chosen_option_text === response.option_a }">
+                      {{ response.option_a }}
+                    </span>
+                    <span class="text-gray-500 mx-1">vs</span>
+                    <span :class="{ 'text-green-600 font-semibold': response.chosen_option_text === response.option_b }">
+                      {{ response.option_b }}
+                    </span>
+                  </td>
+                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                     {{ formatTimeAgo(response.answered_at) }} 
+                   </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="text-center text-gray-500 p-4">
+            Esperando respuestas...
+          </div>
+        </div>
+
       </div>
     </main>
     

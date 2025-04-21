@@ -228,4 +228,36 @@ class AdminController extends Controller
         // Alternatively, for API-like responses if not using Inertia redirects for this:
         // return response()->json(['message' => 'Category order updated successfully.']);
     }
+
+    /**
+     * Get the last 10 recent preference responses.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRecentResponses(Request $request)
+    {
+        $recentVotes = Vote::with('preference') // Cargar la preferencia relacionada
+            ->latest() // Ordenar por created_at DESC
+            ->limit(10) // Limitar a 10 resultados
+            ->get();
+
+        // Mapear los resultados al formato deseado por el frontend
+        $formattedResponses = $recentVotes->map(function ($vote) {
+            if (!$vote->preference) { // Manejar caso donde la preferencia pudo ser eliminada
+                return null;
+            }
+            return [
+                'id' => $vote->id,
+                'option_a' => $vote->preference->preference1,
+                'option_b' => $vote->preference->preference2,
+                'chosen_option_text' => $vote->preference1_chosen 
+                                        ? $vote->preference->preference1 
+                                        : $vote->preference->preference2,
+                'answered_at' => $vote->created_at->toIso8601String(), // Opcional: añadir timestamp
+            ];
+        })->filter(); // filter() elimina los elementos null si una preferencia fue eliminada
+
+        return response()->json($formattedResponses);
+    }
 }

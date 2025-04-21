@@ -40,6 +40,11 @@ Route::post('/admin/categories/{category}/preferences/bulk', [AdminController::c
     ->middleware('auth') // Asegúrate de que 'auth' sea suficiente, o añade 'admin' si tienes ese middleware
     ->name('admin.preferences.bulkStore');
 
+// ++ Nueva ruta API para obtener respuestas recientes ++
+Route::get('/api/admin/recent-responses', [AdminController::class, 'getRecentResponses'])
+    ->middleware('auth')
+    ->name('api.admin.recent-responses');
+
 // Rutas de autenticación (Login/Logout)
 Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->middleware('guest')
