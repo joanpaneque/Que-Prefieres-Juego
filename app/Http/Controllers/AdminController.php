@@ -38,10 +38,12 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'color' => 'required|string|max:7',
         ]);
 
         $category = Category::create([
             'name' => $request->name,
+            'color' => $request->color,
         ]);
 
         return redirect()->route('admin');
@@ -51,10 +53,12 @@ class AdminController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'color' => 'required|string|max:7',
         ]);
 
         $category->update([
             'name' => $request->name,
+            'color' => $request->color,
         ]);
 
         return redirect()->route('admin');

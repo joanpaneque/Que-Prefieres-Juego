@@ -22,7 +22,7 @@ const chartData = computed(() => {
     labels: localCategories.value.map(cat => cat.name),
     datasets: [{
       data: localCategories.value.map(cat => cat.total_votes),
-      backgroundColor: generateColors(localCategories.value.length),
+      backgroundColor: localCategories.value.map(cat => cat.color),
       borderWidth: 1
     }]
   };
@@ -51,7 +51,7 @@ const chartOptions = {
   }
 };
 
-// Generar colores aleatorios pero visualmente agradables
+// Generar colores aleatorios pero visualmente agradables - Mantenido para categorías sin color definido
 function generateColors(count) {
   const colors = [];
   const hueStep = 360 / count;
@@ -66,13 +66,15 @@ function generateColors(count) {
 
 // Formulario para crear categorías
 const createForm = useForm({
-  name: ''
+  name: '',
+  color: '#3B82F6' // Color azul por defecto (blue-500 en Tailwind)
 });
 
 // Formulario para editar categorías
 const editForm = useForm({
   id: null,
-  name: ''
+  name: '',
+  color: '#3B82F6'
 });
 
 // Estado para mostrar/ocultar modal
@@ -99,6 +101,7 @@ const submitCreateForm = () => {
 const openEditModal = (category) => {
   editForm.id = category.id;
   editForm.name = category.name;
+  editForm.color = category.color;
   showEditModal.value = true;
 };
 
@@ -217,6 +220,7 @@ watch(chartData, (newData) => {
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferencias Totales</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votos Totales</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -245,6 +249,12 @@ watch(chartData, (newData) => {
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ category.total_votes }}
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div class="flex items-center">
+                        <span class="w-5 h-5 inline-block mr-2 rounded" :style="{ backgroundColor: category.color }"></span>
+                        {{ category.color }}
+                      </div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
                         @click="openEditModal(category)" 
@@ -264,7 +274,7 @@ watch(chartData, (newData) => {
               </draggable>
               <tbody v-if="!localCategories || localCategories.length === 0" class="bg-white divide-y divide-gray-200">
                 <tr>
-                  <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
+                  <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
                 </tr>
               </tbody>
             </table>
@@ -302,6 +312,26 @@ watch(chartData, (newData) => {
             >
             <div v-if="createForm.errors.name" class="text-red-500 text-sm mt-1">{{ createForm.errors.name }}</div>
           </div>
+          
+          <div class="mb-4">
+            <label for="color" class="block text-sm font-medium text-gray-700">Color</label>
+            <div class="flex items-center mt-1">
+              <input 
+                v-model="createForm.color" 
+                type="color" 
+                id="color" 
+                class="h-10 w-10 border border-gray-300 rounded-md shadow-sm p-0 mr-2"
+              >
+              <input 
+                v-model="createForm.color" 
+                type="text" 
+                class="flex-grow border border-gray-300 rounded-md shadow-sm p-2"
+                placeholder="#3B82F6"
+              >
+            </div>
+            <div v-if="createForm.errors.color" class="text-red-500 text-sm mt-1">{{ createForm.errors.color }}</div>
+          </div>
+          
           <div class="flex justify-end gap-3">
             <button 
               type="button" 
@@ -338,6 +368,26 @@ watch(chartData, (newData) => {
             >
             <div v-if="editForm.errors.name" class="text-red-500 text-sm mt-1">{{ editForm.errors.name }}</div>
           </div>
+          
+          <div class="mb-4">
+            <label for="edit-color" class="block text-sm font-medium text-gray-700">Color</label>
+            <div class="flex items-center mt-1">
+              <input 
+                v-model="editForm.color" 
+                type="color" 
+                id="edit-color" 
+                class="h-10 w-10 border border-gray-300 rounded-md shadow-sm p-0 mr-2"
+              >
+              <input 
+                v-model="editForm.color" 
+                type="text" 
+                class="flex-grow border border-gray-300 rounded-md shadow-sm p-2"
+                placeholder="#3B82F6"
+              >
+            </div>
+            <div v-if="editForm.errors.color" class="text-red-500 text-sm mt-1">{{ editForm.errors.color }}</div>
+          </div>
+          
           <div class="flex justify-end gap-3">
             <button 
               type="button" 
