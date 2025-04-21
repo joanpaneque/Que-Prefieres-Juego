@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import draggable from 'vuedraggable';
 
@@ -15,6 +15,54 @@ const localCategories = ref([...props.categories]); // Use spread to create a ne
 watch(() => props.categories, (newVal) => {
   localCategories.value = [...newVal]; // Update with a new array copy
 }, { deep: true }); // Use deep watch just in case, although direct array replacement should trigger it
+
+// Datos para el gráfico
+const chartData = computed(() => {
+  return {
+    labels: localCategories.value.map(cat => cat.name),
+    datasets: [{
+      data: localCategories.value.map(cat => cat.total_votes),
+      backgroundColor: generateColors(localCategories.value.length),
+      borderWidth: 1
+    }]
+  };
+});
+
+// Opciones para el gráfico
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: '60%', // Esto crea el efecto donut
+  plugins: {
+    legend: {
+      position: 'right',
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context) {
+          const label = context.label || '';
+          const value = context.raw || 0;
+          const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+          const percentage = Math.round((value / total) * 100);
+          return `${label}: ${value} votos (${percentage}%)`;
+        }
+      }
+    }
+  }
+};
+
+// Generar colores aleatorios pero visualmente agradables
+function generateColors(count) {
+  const colors = [];
+  const hueStep = 360 / count;
+  
+  for (let i = 0; i < count; i++) {
+    const hue = i * hueStep;
+    colors.push(`hsl(${hue}, 70%, 60%)`);
+  }
+  
+  return colors;
+}
 
 // Formulario para crear categorías
 const createForm = useForm({
@@ -94,6 +142,36 @@ const updateCategoryOrder = () => {
     // Optional: Add onSuccess/onError handlers if needed
   });
 };
+
+// Referencia al elemento canvas del gráfico
+let chartInstance = null;
+const chartContainer = ref(null);
+
+onMounted(() => {
+  // Importar Chart.js dinámicamente para evitar problemas de SSR
+  import('chart.js').then(module => {
+    const { Chart, ArcElement, Tooltip, Legend, DoughnutController } = module;
+    // Registrar los componentes necesarios
+    Chart.register(ArcElement, Tooltip, Legend, DoughnutController);
+    
+    // Crear el gráfico
+    if (chartContainer.value) {
+      chartInstance = new Chart(chartContainer.value, {
+        type: 'doughnut',
+        data: chartData.value,
+        options: chartOptions
+      });
+    }
+  });
+});
+
+// Actualizar el gráfico cuando cambien los datos
+watch(chartData, (newData) => {
+  if (chartInstance) {
+    chartInstance.data = newData;
+    chartInstance.update();
+  }
+}, { deep: true });
 </script>
 
 <template>
@@ -137,7 +215,8 @@ const updateCategoryOrder = () => {
               <thead class="bg-gray-50">
                 <tr>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Preferencias</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferencias Totales</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Votos Totales</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -163,6 +242,9 @@ const updateCategoryOrder = () => {
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {{ category.preferences_count }}
                     </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ category.total_votes }}
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
                         @click="openEditModal(category)" 
@@ -182,10 +264,23 @@ const updateCategoryOrder = () => {
               </draggable>
               <tbody v-if="!localCategories || localCategories.length === 0" class="bg-white divide-y divide-gray-200">
                 <tr>
-                  <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
+                  <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No hay categorías disponibles</td>
                 </tr>
               </tbody>
             </table>
+          </div>
+          
+          <!-- Gráfico circular de votos por categoría -->
+          <div class="mt-8 pt-6 border-t border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Votos por Categoría</h3>
+            <div v-if="localCategories.length > 0" class="flex justify-center">
+              <div class="w-full max-w-2xl h-80">
+                <canvas ref="chartContainer"></canvas>
+              </div>
+            </div>
+            <div v-else class="text-center text-gray-500 p-4">
+              No hay datos de categorías para mostrar en el gráfico
+            </div>
           </div>
         </div>
       </div>

@@ -19,8 +19,16 @@ class AdminController extends Controller
 {
     public function index()
     {
-        // Order categories by position and load preference count
-        $categories = Category::withCount('preferences')->orderBy('position', 'asc')->get();
+        // Order categories by position, load preference count, and total votes count
+        $categories = Category::query()
+            ->withCount('preferences') // Cuenta las preferencias por categoría
+            ->addSelect(['total_votes' => Vote::selectRaw('count(*)') // Subconsulta para contar votos
+                ->join('preferences', 'votes.preference_id', '=', 'preferences.id')
+                ->whereColumn('preferences.category_id', 'categories.id') // Filtra por categoría
+            ])
+            ->orderBy('position', 'asc')
+            ->get();
+
         return Inertia::render('Admin/Index', [
             'categories' => $categories
         ]);
