@@ -31,7 +31,7 @@ class Preference extends Model
         srand($seed); // Establecemos la semilla
         $randomFactor = rand(654, 782); // Generamos un número aleatorio entre 654 y 782
         
-        return $this->votes()->where('vote', 'preference1')->count() * $randomFactor;
+        return ($this->votes()->where('vote', 'preference1')->count() + 1) * $randomFactor;
     }
     
     public function getPreference2VotesAttribute()
@@ -40,7 +40,7 @@ class Preference extends Model
         srand($seed); // Establecemos la semilla
         $randomFactor = rand(654, 782); // Generamos un número aleatorio entre 654 y 782
         
-        return $this->votes()->where('vote', 'preference2')->count() * $randomFactor;
+        return ($this->votes()->where('vote', 'preference2')->count() + 1) * $randomFactor;
     }
 
 }
