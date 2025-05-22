@@ -27,11 +27,11 @@ class Preference extends Model
 
     public function getPreference1VotesAttribute()
     {
-        return $this->votes()->where('vote', 'preference1')->count();
+        return $this->votes()->where('vote', 'preference1')->count() * 654;
     }
 
     public function getPreference2VotesAttribute()
     {
-        return $this->votes()->where('vote', 'preference2')->count();
+        return $this->votes()->where('vote', 'preference2')->count() * 654;
     }
 }
