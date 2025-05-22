@@ -27,18 +27,18 @@ class Preference extends Model
 
     public function getPreference1VotesAttribute()
     {
-        $seed = now()->timestamp; // Obtenemos el tiempo en segundos actual
-        srand($seed); // Establecemos la semilla
-        $randomFactor = rand(654, 782); // Generamos un número aleatorio entre 654 y 782
+        $seed = now()->timestamp;
+        srand($seed);
+        $randomFactor = rand(654, 782);
         
         return ($this->votes()->where('vote', 'preference1')->count() + 1) * $randomFactor;
     }
     
     public function getPreference2VotesAttribute()
     {
-        $seed = now()->timestamp; // Obtenemos el tiempo en segundos actual
-        srand($seed); // Establecemos la semilla
-        $randomFactor = rand(654, 782); // Generamos un número aleatorio entre 654 y 782
+        $seed = now()->timestamp;
+        srand($seed);
+        $randomFactor = rand(654, 782);
         
         return ($this->votes()->where('vote', 'preference2')->count() + 1) * $randomFactor;
     }
