@@ -1,7 +1,8 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted, computed, watch } from 'vue';
-import axios from 'axios';  
+import axios from 'axios';
+import AdBanner from '@/Components/AdBanner.vue';
 
 // Recibir categorías del controlador
 const props = defineProps({
@@ -63,7 +64,7 @@ function getNewPreference() {
     axios.get('/api/get-new-preference', { params })
         .then(response => {
             showVotes.value = false; // Asegurarse de ocultar votos viejos
-            
+
             if (response.data.preference) {
                 currentPreference.value = response.data.preference;
                 alreadyPlayedPreferences.value.push(currentPreference.value.id);
@@ -71,7 +72,7 @@ function getNewPreference() {
                 // No se encontró preferencia
                 currentPreference.value = null;
                 // Mostrar el mensaje personalizado
-                noMorePreferencesMessage.value = '¡No quedan más preguntas en esta categoría! Puedes elegir otra categoría o volver a jugar las mismas reiniciando la lista.'; 
+                noMorePreferencesMessage.value = '¡No quedan más preguntas en esta categoría! Puedes elegir otra categoría o volver a jugar las mismas reiniciando la lista.';
                 // Opcional: Botón para reiniciar lista (vaciar alreadyPlayedPreferences)
                 console.warn(response.data.message || "No preference found.");
             }
@@ -148,22 +149,22 @@ watch(showVotes, (newValue) => {
         // Start percentage animation immediately
         animatePercentage(animatedPreference1Percentage, preference1Percentage.value);
         animatePercentage(animatedPreference2Percentage, preference2Percentage.value);
-        
+
         // Schedule the "Siguiente" button to appear after 1 second
         setTimeout(() => {
             // Check if votes are still shown (user might have clicked quickly)
-            if (showVotes.value) { 
+            if (showVotes.value) {
                 showNextButtonDelayed.value = true;
             }
         }, 1000); // 1000ms delay
-    } 
+    }
 });
 
 const showCategoriesMenu = ref(false);
 
 onMounted(() => {
     // Obtener preferencia inicial (considerar filtrar por categoría seleccionada si es necesario)
-    getNewPreference(); 
+    getNewPreference();
 });
 
 // Función para seleccionar una categoría
@@ -175,10 +176,10 @@ function selectCategory(category) {
     selectedCategory.value = category;
     showCategoriesMenu.value = false; // Asegurarse de que el menú se cierre
     // Limpiar lista de preferencias jugadas al cambiar de categoría
-    alreadyPlayedPreferences.value = []; 
+    alreadyPlayedPreferences.value = [];
     // Asegurarse de limpiar el mensaje de "no quedan preguntas"
-    noMorePreferencesMessage.value = ''; 
-    getNewPreference(); 
+    noMorePreferencesMessage.value = '';
+    getNewPreference();
 }
 
 // Función para reiniciar preguntas de la categoría actual
@@ -194,7 +195,7 @@ function resetPreferences() {
         <title>Juego ¿Qué Prefieres? Online Gratis</title>
         <meta name="description" content="Juega gratis al popular juego '¿Qué prefieres?' online. Enfrenta divertidos y difíciles dilemas, vota por tu opción preferida y descubre al instante qué elige la mayoría. ¡Horas de diversión garantizadas!">
         <meta name="keywords" content="qué prefieres, que prefieres, juego, jugar, online, gratis, preguntas, dilemas, elecciones, votar, comparar, popular, divertido">
-        
+
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="https://queprefieresjuego.com/">
@@ -212,11 +213,18 @@ function resetPreferences() {
         <!-- Canonical URL -->
         <link rel="canonical" href="https://queprefieresjuego.com/" />
     </Head>
-    <div class="h-dvh w-screen overflow-hidden bg-gray-900 grid grid-rows-2 p-4 gap-4 relative">
+    <div class="h-dvh w-screen overflow-hidden bg-gray-900 flex flex-col">
+        <!-- Banner de anuncios -->
+        <div class="flex-shrink-0 bg-gray-800 flex justify-center items-center py-2">
+            <AdBanner />
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="flex-1 grid grid-rows-2 p-4 gap-4 relative">
         <div class="absolute top-0 left-[50%] -translate-x-1/2 text-center text-white bg-gray-900 px-4 py-2 rounded-b-2xl w-fit whitespace-nowrap z-20">
             <h1 class="text-2xl font-bold">¿Qué Prefieres?</h1>
         </div>
-        <div 
+        <div
             class="absolute z-50 text-center bottom-0 w-[calc(100%-32px)] select-none left-[50%] bg-gray-900/80 transition-all duration-300 ease-in-out -translate-x-1/2 text-white px-4 py-2 rounded-t-2xl whitespace-nowrap"
             :class="{
                 'h-[calc(100%-48px-16px)] max-w-full overflow-y-auto': showCategoriesMenu, // Añadido overflow
@@ -224,22 +232,22 @@ function resetPreferences() {
             }"
             @click="showCategoriesMenu = !showCategoriesMenu"
         >
-            <h1 
-                class="text-xl font-bold inline-flex items-center gap-2 justify-center cursor-pointer mb-4" 
+            <h1
+                class="text-xl font-bold inline-flex items-center gap-2 justify-center cursor-pointer mb-4"
             >
                 {{ selectedCategory ? selectedCategory.name : 'Preguntas generales' }}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" 
-                     class="w-5 h-5 ml-1 transition-transform duration-300 ease-in-out" 
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor"
+                     class="w-5 h-5 ml-1 transition-transform duration-300 ease-in-out"
                      :class="{ 'rotate-180': showCategoriesMenu }">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
                 </svg>
             </h1>
-            
+
             <!-- Lista de categorías (solo visible si showCategoriesMenu es true) -->
             <div v-if="showCategoriesMenu" class="mt-4 space-y-2">
-                <div 
-                    v-for="category in categories" 
-                    :key="category.id" 
+                <div
+                    v-for="category in categories"
+                    :key="category.id"
                     @click.stop="selectCategory(category)"
                     class="text-xl p-2 rounded hover:bg-gray-700 cursor-pointer w-[300px] mx-auto"
                     :class="{'bg-gray-600 font-semibold': selectedCategory && selectedCategory.id === category.id}"
@@ -250,26 +258,26 @@ function resetPreferences() {
                     No hay categorías disponibles.
                  </div>
                  <!-- Botón para cerrar -->
-                 <button 
-                    @click.stop="showCategoriesMenu = false" 
+                 <button
+                    @click.stop="showCategoriesMenu = false"
                     class="mt-6 px-4 py-2 bg-sky-700 w-[300px] text-lg text-white rounded hover:bg-gray-600 transition w-full"
                  >
                      Cerrar
                  </button>
             </div>
         </div>
-        
+
         <!-- Mensaje de No más Preferencias (Overlay) -->
         <div v-if="noMorePreferencesMessage" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 bg-opacity-90 z-30 p-8 text-center">
              <p class="text-white text-2xl font-semibold mb-6">{{ noMorePreferencesMessage }}</p>
              <div class="flex flex-col sm:flex-row gap-4">
-                 <button 
+                 <button
                      @click="resetPreferences"
                      class="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-lg"
                  >
                      Volver a jugar esta categoría
                  </button>
-                 <button 
+                 <button
                      @click="showCategoriesMenu = true"
                      class="px-6 py-3 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-lg"
                  >
@@ -277,15 +285,15 @@ function resetPreferences() {
                  </button>
              </div>
         </div>
-        
+
         <!-- Contenedor Principal de Preferencias (solo si no hay mensaje overlay) -->
         <template v-if="!noMorePreferencesMessage">
             <!-- Estado de Carga (solo si no hay preferencia Y el menú de categorías está CERRADO) -->
-            <template v-if="!currentPreference && !showCategoriesMenu"> 
-                 <div class="bg-gray-800 rounded-2xl flex items-center justify-center text-gray-500 text-2xl">Cargando pregunta...</div> 
+            <template v-if="!currentPreference && !showCategoriesMenu">
+                 <div class="bg-gray-800 rounded-2xl flex items-center justify-center text-gray-500 text-2xl">Cargando pregunta...</div>
                  <div class="bg-gray-800 rounded-2xl"></div> <!-- Placeholder para la segunda mitad -->
             </template>
-            
+
             <!-- Preferencias Cargadas (o si el menú está abierto aunque no haya preferencia aún) -->
             <template v-else-if="currentPreference">
                 <!-- Preferencia 1 -->
@@ -326,19 +334,20 @@ function resetPreferences() {
                  <div class="bg-gray-800 rounded-2xl opacity-50"></div> <!-- Placeholder opaco 2 -->
             </template>
         </template>
-        
+
         <!-- "Siguiente" Button (solo si hay preferencia actual y no hay mensaje) -->
         <transition name="fade">
-            <div 
-                v-if="currentPreference && !noMorePreferencesMessage" 
-                v-show="showNextButtonDelayed" 
+            <div
+                v-if="currentPreference && !noMorePreferencesMessage"
+                v-show="showNextButtonDelayed"
                 @click="getNewPreference"
                 class="text-center whitespace-nowrap absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white text-zinc-800 px-8 py-4 rounded-2xl shadow-lg cursor-pointer text-2xl font-semibold hover:bg-zinc-100 z-10"
             >
                 Siguiente pregunta
             </div>
         </transition>
-    </div>
+        </div> <!-- Cierre del contenido principal -->
+    </div> <!-- Cierre del div principal -->
 </template>
 
 <style scoped>
